@@ -1,0 +1,16 @@
+[
+  {"name": "MacBook Pro 14-inch", "width_mm": 302.4, "height_mm": 196.4, "camera_x": 0.5, "camera_y_mm": 3.4,
+   "resolutions": [[1512, 982], [1147, 745], [1352, 878], [1800, 1169], [1024, 665]]},
+  {"name": "MacBook Pro 16-inch", "width_mm": 345.6, "height_mm": 223.4, "camera_x": 0.5, "camera_y_mm": 3.4,
+   "resolutions": [[1728, 1117], [1312, 848], [1496, 967], [2056, 1329]]},
+  {"name": "MacBook Air 13-inch (M2 and later)", "width_mm": 290.3, "height_mm": 188.7, "camera_x": 0.5, "camera_y_mm": 3.4,
+   "resolutions": [[1470, 956], [1280, 832], [1710, 1112]]},
+  {"name": "MacBook Air 15-inch", "width_mm": 326.6, "height_mm": 211.4, "camera_x": 0.5, "camera_y_mm": 3.4,
+   "resolutions": [[1710, 1112], [1440, 932], [1920, 1243]]},
+  {"name": "MacBook 13-inch without notch (2016-2022)", "width_mm": 286.4, "height_mm": 179.0, "camera_x": 0.5, "camera_y_mm": -8.0,
+   "resolutions": [[1440, 900], [1280, 800], [1680, 1050], [1024, 640]]},
+  {"name": "External 24-inch 16:9 monitor, webcam on top", "width_mm": 531.4, "height_mm": 298.9, "camera_x": 0.5, "camera_y_mm": -12.0,
+   "resolutions": [[1920, 1080]]},
+  {"name": "External 27-inch 16:9 monitor, webcam on top", "width_mm": 597.9, "height_mm": 336.3, "camera_x": 0.5, "camera_y_mm": -12.0,
+   "resolutions": [[2560, 1440]]}
+]

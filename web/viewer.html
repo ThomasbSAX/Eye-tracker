@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gaze viewer</title>
+<style>
+  :root { --bg: #f6f5f1; --panel: #fff; --ink: #1d1d1f; --muted: #6e6e73; --line: #e2e0da; --accent: #1f4fa8; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141518; --panel: #1d1f23; --ink: #e8eaed; --muted: #9aa1aa; --line: #30343a; --accent: #7aa7ff; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #141518; --panel: #1d1f23; --ink: #e8eaed; --muted: #9aa1aa; --line: #30343a; --accent: #7aa7ff; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; padding: 14px 16px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+  h1 { font-size: 16px; margin: 0 12px 0 0; }
+  label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  select, input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+  input[type=file] { max-width: 230px; }
+  main { padding: 16px; display: grid; gap: 12px; }
+  #wrap { position: relative; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); max-height: calc(100vh - 140px); }
+  canvas { display: block; width: 100%; height: auto; }
+  #tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; padding: 4px 8px; border-radius: 6px; display: none; z-index: 3; }
+  #info { color: var(--muted); }
+  #empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gaze viewer</h1>
+  <label>fixations.csv <input type="file" id="csv" accept=".csv"></label>
+  <label>background image <input type="file" id="img" accept="image/*"></label>
+  <label>coordinates <select id="space"></select></label>
+  <label>blur <input type="range" id="sigma" min="10" max="150" value="45"></label>
+  <label>from <input type="number" id="t0" step="0.5" style="width:6em"> to <input type="number" id="t1" step="0.5" style="width:6em"> s</label>
+  <label><input type="checkbox" id="path" checked> scanpath</label>
+</header>
+<main>
+  <div id="info"></div>
+  <div id="wrap"><div id="empty">Choose a fixations.csv file written by code/track.py, then optionally a screenshot of the page or the image that was tested.</div><canvas id="cv" hidden></canvas></div>
+</main>
+<div id="tip"></div>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const SPACES = { screen: ["x_px", "y_px"], client: ["client_x", "client_y"], page: ["page_x", "page_y"] };
+let rows = [], bg = null;
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const split = (l) => { const out = []; let cur = "", q = false;
+    for (const c of l) { if (c === '"') q = !q; else if (c === "," && !q) { out.push(cur); cur = ""; } else cur += c; }
+    out.push(cur); return out; };
+  const head = split(lines[0]);
+  return lines.slice(1).map((l) => Object.fromEntries(split(l).map((v, i) => [head[i], v])));
+}
+
+function points() {
+  const sp = $("space").value;
+  const t0 = parseFloat($("t0").value) * 1000, t1 = parseFloat($("t1").value) * 1000;
+  return rows.filter((r) => r.kind === "fixation" && +r.start_ms >= t0 && +r.start_ms <= t1).map((r) => {
+    const [x, y] = SPACES[sp] ? SPACES[sp].map((k) => parseFloat(r[k])) : (r.element === sp ? [parseFloat(r.element_x), parseFloat(r.element_y)] : [NaN, NaN]);
+    return { x, y, d: +r.duration_ms, r };
+  }).filter((p) => isFinite(p.x) && isFinite(p.y));
+}
+
+function draw() {
+  if (!rows.length) return;
+  const pts = points();
+  const W = bg ? bg.naturalWidth : Math.max(400, ...pts.map((p) => p.x + 40));
+  const H = bg ? bg.naturalHeight : Math.max(300, ...pts.map((p) => p.y + 40));
+  const cv = $("cv"); cv.hidden = false; $("empty").hidden = true;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#f2f2f2"; ctx.fillRect(0, 0, W, H);
+  if (bg) ctx.drawImage(bg, 0, 0);
+  const s = +$("sigma").value;
+  const heat = document.createElement("canvas"); heat.width = W; heat.height = H;
+  const hc = heat.getContext("2d");
+  const dmax = Math.max(...pts.map((p) => p.d), 1);
+  for (const p of pts) {
+    const g = hc.createRadialGradient(p.x, p.y, 0, p.x, p.y, 2.5 * s);
+    g.addColorStop(0, `rgba(0,0,0,${0.25 + 0.6 * p.d / dmax})`); g.addColorStop(1, "rgba(0,0,0,0)");
+    hc.fillStyle = g; hc.fillRect(p.x - 3 * s, p.y - 3 * s, 6 * s, 6 * s);
+  }
+  const img = hc.getImageData(0, 0, W, H), a = img.data;
+  for (let i = 0; i < a.length; i += 4) {
+    const v = Math.min(1, a[i + 3] / 255);
+    if (v < 0.03) { a[i + 3] = 0; continue; }
+    const h = (1 - v) * 240;
+    const [r, g, b] = hsl(h, 0.9, 0.5);
+    a[i] = r; a[i + 1] = g; a[i + 2] = b; a[i + 3] = Math.min(190, 60 + 200 * v);
+  }
+  hc.putImageData(img, 0, 0);
+  ctx.drawImage(heat, 0, 0);
+  if ($("path").checked) {
+    ctx.strokeStyle = "rgba(31,79,168,.75)"; ctx.lineWidth = 1.2; ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke();
+    ctx.font = "10px -apple-system, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    pts.forEach((p, i) => { const r = 6 + Math.sqrt(p.d) / 4;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2 * Math.PI); ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fill();
+      ctx.strokeStyle = "#1f4fa8"; ctx.stroke(); ctx.fillStyle = "#1f4fa8"; ctx.fillText(String(i + 1), p.x, p.y); });
+  }
+  const total = pts.reduce((s, p) => s + p.d, 0);
+  $("info").textContent = `${pts.length} fixations, ${(total / 1000).toFixed(1)} s of fixation, image ${W} x ${H} px.`;
+  cv.onmousemove = (e) => {
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * W / rect.width, y = (e.clientY - rect.top) * H / rect.height;
+    const best = pts.map((p, i) => [Math.hypot(p.x - x, p.y - y), i]).sort((u, v) => u[0] - v[0])[0];
+    const tip = $("tip");
+    if (!best || best[0] > 20) { tip.style.display = "none"; return; }
+    const p = pts[best[1]];
+    tip.textContent = `#${best[1] + 1}, ${Math.round(p.d)} ms, t = ${(+p.r.start_ms / 1000).toFixed(2)} s${p.r.element ? ", " + p.r.element : ""}`;
+    Object.assign(tip.style, { display: "block", left: `${e.clientX + 12}px`, top: `${e.clientY + 12}px` });
+  };
+}
+
+function hsl(h, s, l) {
+  const f = (n) => { const k = (n + h / 30) % 12; return l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+  return [255 * f(0), 255 * f(8), 255 * f(4)];
+}
+
+$("csv").addEventListener("change", async (e) => {
+  rows = parseCsv(await e.target.files[0].text());
+  const sel = $("space"); sel.replaceChildren();
+  const cols = Object.keys(rows[0] || {});
+  for (const k of Object.keys(SPACES)) if (cols.includes(SPACES[k][0])) sel.add(new Option(k === "screen" ? "screen" : k === "page" ? "page (with scrolling)" : "window", k));
+  for (const name of [...new Set(rows.map((r) => r.element).filter(Boolean))]) sel.add(new Option(`element: ${name}`, name));
+  const ts = rows.map((r) => +r.start_ms / 1000);
+  $("t0").value = Math.floor(Math.min(...ts)); $("t1").value = Math.ceil(Math.max(...ts));
+  draw();
+});
+$("img").addEventListener("change", (e) => { bg = new Image(); bg.onload = draw; bg.src = URL.createObjectURL(e.target.files[0]); });
+for (const id of ["space", "sigma", "t0", "t1", "path"]) $(id).addEventListener("input", draw);
+</script>
+</body>
+</html>

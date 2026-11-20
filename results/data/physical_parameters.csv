@@ -1,0 +1,9 @@
+parameter,value
+rest_yaw_left,-9.7624
+rest_pitch_left,10.706
+rest_yaw_right,10.137
+rest_pitch_right,10.5409
+gain_x,1.6218
+gain_y,3.0686
+eyeball_depth_mm,8.6589
+lid_gain,0.4179

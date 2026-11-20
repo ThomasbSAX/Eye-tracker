@@ -1,0 +1,12 @@
+model,protocol,n,median_cm,mean_cm,p90_cm,median_deg,mean_of_round_medians_cm
+Géométrie seule,cibles jamais vues,3974,4.022,4.765,7.45,4.277,
+Géométrie seule,posture jamais vue,3142,5.752,6.925,9.213,6.082,5.517
+Géométrie seule,posture jamais vue + 5 points,3142,2.721,4.1,6.363,,3.04
+Réseau + calibration linéaire,cibles jamais vues,3974,2.149,2.723,5.109,2.283,
+Réseau + calibration linéaire,posture jamais vue,3142,2.549,2.927,4.974,2.688,2.649
+Réseau + calibration linéaire,posture jamais vue + 5 points,3142,1.434,3.102,5.866,,2.046
+Modèle complet,cibles jamais vues,3974,0.83,1.166,2.084,0.878,
+Modèle complet,posture jamais vue,3142,2.63,2.849,4.813,2.784,2.679
+Modèle complet,posture jamais vue + 5 points,3142,1.517,3.043,5.8,,2.18
+MPIIFaceGaze brut,sans calibration,3974,4.809,5.084,7.581,,
+ETH-XGaze brut,sans calibration,3974,4.635,5.145,8.369,,

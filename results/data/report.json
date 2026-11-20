@@ -1,0 +1,319 @@
+{
+ "recording": "calib_20261025_102754",
+ "frames": 9283,
+ "fixation_frames": 3974,
+ "sync_offset_ms": 193.0,
+ "focal_px": 1011.6,
+ "physical_points_never_seen": {
+  "cm": {
+   "n": 3974,
+   "median": 4.02,
+   "mean": 4.76,
+   "p90": 7.45
+  },
+  "deg": {
+   "n": 3974,
+   "median": 4.28,
+   "mean": 4.8,
+   "p90": 7.74
+  }
+ },
+ "physical_pose_never_seen": {
+  "mean_of_medians_cm": 5.52,
+  "mean_of_medians_recal_cm": 3.04,
+  "rounds": {
+   "round0": {
+    "cm": {
+     "n": 629,
+     "median": 2.79,
+     "mean": 8.04,
+     "p90": 6.0
+    },
+    "cm_recal": {
+     "n": 629,
+     "median": 1.33,
+     "mean": 3.38,
+     "p90": 3.45
+    }
+   },
+   "round1": {
+    "cm": {
+     "n": 630,
+     "median": 5.72,
+     "mean": 6.54,
+     "p90": 8.48
+    },
+    "cm_recal": {
+     "n": 630,
+     "median": 4.31,
+     "mean": 5.24,
+     "p90": 5.46
+    }
+   },
+   "round2": {
+    "cm": {
+     "n": 628,
+     "median": 5.13,
+     "mean": 5.5,
+     "p90": 7.98
+    },
+    "cm_recal": {
+     "n": 628,
+     "median": 4.57,
+     "mean": 5.8,
+     "p90": 9.22
+    }
+   },
+   "round3": {
+    "cm": {
+     "n": 626,
+     "median": 7.29,
+     "mean": 7.11,
+     "p90": 10.25
+    },
+    "cm_recal": {
+     "n": 626,
+     "median": 3.13,
+     "mean": 3.21,
+     "p90": 5.57
+    }
+   },
+   "round4": {
+    "cm": {
+     "n": 629,
+     "median": 6.67,
+     "mean": 7.45,
+     "p90": 9.19
+    },
+    "cm_recal": {
+     "n": 629,
+     "median": 1.85,
+     "mean": 2.87,
+     "p90": 3.57
+    }
+   }
+  }
+ },
+ "linear_points_never_seen": {
+  "cm": {
+   "n": 3974,
+   "median": 2.15,
+   "mean": 2.72,
+   "p90": 5.11
+  },
+  "deg": {
+   "n": 3974,
+   "median": 2.28,
+   "mean": 2.81,
+   "p90": 5.02
+  }
+ },
+ "linear_pose_never_seen": {
+  "mean_of_medians_cm": 2.65,
+  "mean_of_medians_recal_cm": 2.05,
+  "rounds": {
+   "round0": {
+    "cm": {
+     "n": 629,
+     "median": 1.26,
+     "mean": 1.8,
+     "p90": 2.6
+    },
+    "cm_recal": {
+     "n": 629,
+     "median": 0.84,
+     "mean": 1.43,
+     "p90": 1.75
+    }
+   },
+   "round1": {
+    "cm": {
+     "n": 630,
+     "median": 3.13,
+     "mean": 3.31,
+     "p90": 4.56
+    },
+    "cm_recal": {
+     "n": 630,
+     "median": 2.45,
+     "mean": 2.61,
+     "p90": 3.68
+    }
+   },
+   "round2": {
+    "cm": {
+     "n": 628,
+     "median": 3.65,
+     "mean": 3.95,
+     "p90": 6.28
+    },
+    "cm_recal": {
+     "n": 628,
+     "median": 4.92,
+     "mean": 9.01,
+     "p90": 23.26
+    }
+   },
+   "round3": {
+    "cm": {
+     "n": 626,
+     "median": 3.5,
+     "mean": 3.68,
+     "p90": 5.41
+    },
+    "cm_recal": {
+     "n": 626,
+     "median": 1.33,
+     "mean": 1.5,
+     "p90": 2.61
+    }
+   },
+   "round4": {
+    "cm": {
+     "n": 629,
+     "median": 1.7,
+     "mean": 1.9,
+     "p90": 2.82
+    },
+    "cm_recal": {
+     "n": 629,
+     "median": 0.7,
+     "mean": 0.96,
+     "p90": 1.58
+    }
+   }
+  }
+ },
+ "full_points_never_seen": {
+  "cm": {
+   "n": 3974,
+   "median": 0.83,
+   "mean": 1.17,
+   "p90": 2.08
+  },
+  "deg": {
+   "n": 3974,
+   "median": 0.88,
+   "mean": 1.21,
+   "p90": 2.14
+  }
+ },
+ "full_pose_never_seen": {
+  "mean_of_medians_cm": 2.68,
+  "mean_of_medians_recal_cm": 2.18,
+  "rounds": {
+   "round0": {
+    "cm": {
+     "n": 629,
+     "median": 1.97,
+     "mean": 2.09,
+     "p90": 3.77
+    },
+    "cm_recal": {
+     "n": 629,
+     "median": 1.0,
+     "mean": 1.31,
+     "p90": 1.94
+    }
+   },
+   "round1": {
+    "cm": {
+     "n": 630,
+     "median": 2.76,
+     "mean": 2.99,
+     "p90": 4.25
+    },
+    "cm_recal": {
+     "n": 630,
+     "median": 2.35,
+     "mean": 2.48,
+     "p90": 3.51
+    }
+   },
+   "round2": {
+    "cm": {
+     "n": 628,
+     "median": 3.46,
+     "mean": 3.74,
+     "p90": 5.84
+    },
+    "cm_recal": {
+     "n": 628,
+     "median": 5.31,
+     "mean": 8.84,
+     "p90": 23.06
+    }
+   },
+   "round3": {
+    "cm": {
+     "n": 626,
+     "median": 3.54,
+     "mean": 3.64,
+     "p90": 5.26
+    },
+    "cm_recal": {
+     "n": 626,
+     "median": 1.53,
+     "mean": 1.66,
+     "p90": 2.77
+    }
+   },
+   "round4": {
+    "cm": {
+     "n": 629,
+     "median": 1.67,
+     "mean": 1.79,
+     "p90": 2.78
+    },
+    "cm_recal": {
+     "n": 629,
+     "median": 0.71,
+     "mean": 0.94,
+     "p90": 1.74
+    }
+   }
+  }
+ },
+ "pursuit_cm": {
+  "round0": {
+   "n": 337,
+   "median": 2.07,
+   "mean": 2.13,
+   "p90": 3.46
+  },
+  "round1": {
+   "n": 337,
+   "median": 3.27,
+   "mean": 3.36,
+   "p90": 4.85
+  },
+  "round2": {
+   "n": 336,
+   "median": 3.97,
+   "mean": 3.53,
+   "p90": 5.79
+  },
+  "round3": {
+   "n": 337,
+   "median": 3.26,
+   "mean": 3.15,
+   "p90": 4.47
+  },
+  "round4": {
+   "n": 337,
+   "median": 1.48,
+   "mean": 1.63,
+   "p90": 2.57
+  }
+ },
+ "physical_parameters": {
+  "rest_yaw_left": -9.7624,
+  "rest_pitch_left": 10.706,
+  "rest_yaw_right": 10.137,
+  "rest_pitch_right": 10.5409,
+  "gain_x": 1.6218,
+  "gain_y": 3.0686,
+  "eyeball_depth_mm": 8.6589,
+  "lid_gain": 0.4179
+ }
+}

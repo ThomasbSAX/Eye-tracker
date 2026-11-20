@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gaze calibration</title>
+<style>
+  :root {
+    --bg: #15171a;
+    --panel: #1f2226;
+    --line: #33383f;
+    --fg: #e8eaed;
+    --muted: #9aa1aa;
+    --accent: #f5c84c;
+    --ok: #5cc98a;
+    --warn: #ff8a65;
+    --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--ui); }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; display: grid; gap: 22px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 15px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  p { margin: 0; }
+  .lead { color: var(--muted); max-width: 62ch; }
+  section.step { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button { font: inherit; background: var(--line); color: var(--fg); border: 1px solid transparent; border-radius: 8px; padding: 9px 16px; cursor: pointer; }
+  button.primary { background: var(--accent); color: #1b1606; font-weight: 600; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input[type=range] { width: min(100%, 360px); }
+  select, input[type=number] { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .status { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--warn); }
+  #preview { width: 320px; max-width: 100%; border-radius: 8px; transform: scaleX(-1); background: #000; }
+  ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+  #stage { position: fixed; inset: 0; background: #000; display: none; cursor: none; }
+  #stage canvas { width: 100%; height: 100%; display: block; }
+  #overlay { position: fixed; inset: 0; display: none; place-items: center; text-align: center; background: #000; color: var(--fg); padding: 24px; }
+  #overlay .box { max-width: 560px; display: grid; gap: 14px; }
+  #overlay .big { font-size: 34px; font-weight: 700; }
+  #overlay #overlayText { font-size: 24px; line-height: 1.4; }
+  #overlay #overlayHint { font-size: 20px; color: var(--accent); }
+  #downloads a { color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main id="setup">
+  <header>
+    <h1>Gaze calibration</h1>
+    <p class="lead">A dot moves across the screen while the webcam films you. Its position is the exact label of every frame:
+      about 3 minutes give nearly 5,000 labelled frames to <span class="num">code/calibrate.py</span>.</p>
+  </header>
+
+  <section class="step">
+    <h2>0 &middot; Screen</h2>
+    <div class="row">
+      <label for="screenModel">Model</label>
+      <select id="screenModel"></select>
+    </div>
+    <div class="row" id="customRow" hidden>
+      <label for="diagonal">Diagonal (inches)</label>
+      <input type="number" id="diagonal" min="10" max="60" step="0.1" value="24">
+    </div>
+    <div class="row">
+      <label for="camY">Webcam: lens centre relative to the top edge of the picture (mm, negative = above it)</label>
+      <input type="number" id="camY" step="0.5" value="3.4">
+    </div>
+    <p class="status num" id="scaleInfo"></p>
+  </section>
+
+  <section class="step">
+    <h2>1 &middot; Camera</h2>
+    <div class="row">
+      <button id="camBtn">Turn on the webcam</button>
+      <span class="status" id="camStatus">Webcam off</span>
+    </div>
+    <video id="preview" autoplay muted playsinline hidden></video>
+  </section>
+
+  <section class="step">
+    <h2>2 &middot; Session</h2>
+    <ol>
+      <li>Sit 40 to 60 cm away, face well lit (light from the front, no backlight).</li>
+      <li>Follow the dot with your eyes; you can move your head normally.</li>
+      <li>Between rounds, change your head position a little as instructed.</li>
+      <li>Escape stops the session; the video can still be downloaded.</li>
+    </ol>
+    <div class="row">
+      <label for="rounds">Number of rounds</label>
+      <select id="rounds">
+        <option value="3" selected>3 rounds (~3 min)</option>
+        <option value="5">5 rounds (~5 min)</option>
+        <option value="1">1 round (trial, ~1 min)</option>
+      </select>
+      <button class="primary" id="startBtn" disabled>Start in full screen</button>
+    </div>
+  </section>
+
+  <section class="step" id="downloads" hidden>
+    <h2>Result</h2>
+    <p id="summary"></p>
+    <div class="row" id="links"></div>
+    <p class="lead">Put both files in <span class="num">data/calibration/</span>, then run
+      <span class="num">code/calibrate.py</span>.</p>
+  </section>
+</main>
+
+<div id="stage"><canvas id="canvas"></canvas></div>
+<div id="overlay"><div class="box"><div class="big" id="overlayTitle"></div><p id="overlayText"></p><p class="status num" id="overlayHint">Space or click to continue</p></div></div>
+
+<script>
+"use strict";
+
+const MARGIN = 0.06;
+const GRID_MS = 1600;
+const RANDOM_MS = 1300;
+const PURSUIT_MS = 12000;
+const FLASH_MS = 300;
+const ROUND_HINTS = [
+  "Head straight, facing the screen, at your usual distance.",
+  "Turn your head slightly to the left, and move a little closer to the screen.",
+  "Turn your head slightly to the right, and move back a little.",
+  "Raise your chin a little.",
+  "Lower your chin a little."
+];
+const params = new URLSearchParams(location.search);
+const AUTO = params.get("auto") === "1";
+const INTRO_SEC = 10;
+const PAUSE_SEC = 7;
+
+function speak(text) {
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+const $ = (id) => document.getElementById(id);
+let PRESETS = [];
+let screenModel = null;
+let mmPerPx = 0.2;
+let mmSource = "";
+
+function updateScreen() {
+  const i = $("screenModel").value;
+  const w = screen.width, h = screen.height;
+  $("customRow").hidden = i !== "custom";
+  if (i === "custom") {
+    const k = parseFloat($("diagonal").value) * 25.4 / Math.hypot(w, h);
+    screenModel = { name: `${$("diagonal").value}-inch screen`, width_px: w, height_px: h, width_mm: w * k, height_mm: h * k };
+  } else {
+    const p = PRESETS[+i];
+    screenModel = { name: p.name, width_px: w, height_px: h, width_mm: p.width_mm, height_mm: p.height_mm };
+  }
+  screenModel.camera_x_mm = screenModel.width_mm / 2;
+  screenModel.camera_y_mm = parseFloat($("camY").value);
+  mmPerPx = screenModel.width_mm / w;
+  mmSource = `screen model ${screenModel.name}`;
+  $("scaleInfo").textContent = `${screenModel.name}: ${screenModel.width_mm.toFixed(1)} x ${screenModel.height_mm.toFixed(1)} mm, `
+    + `${w} x ${h} CSS pixels, ${mmPerPx.toFixed(4)} mm per pixel, webcam at (${screenModel.camera_x_mm.toFixed(1)}, ${screenModel.camera_y_mm.toFixed(1)}) mm.`;
+}
+
+async function loadScreens() {
+  try { PRESETS = await (await fetch("screens.json")).json(); } catch (e) { PRESETS = []; }
+  const sel = $("screenModel");
+  PRESETS.forEach((p, i) => sel.add(new Option(p.name, String(i))));
+  sel.add(new Option("Other screen (diagonal)", "custom"));
+  const match = PRESETS.findIndex((p) => p.resolutions.some(([w, h]) => w === screen.width && h === screen.height));
+  sel.value = match >= 0 ? String(match) : "custom";
+  if (match >= 0) $("camY").value = PRESETS[match].camera_y_mm;
+  else $("camY").value = -12;
+  sel.addEventListener("change", () => {
+    if (sel.value !== "custom") $("camY").value = PRESETS[+sel.value].camera_y_mm;
+    updateScreen();
+  });
+  $("diagonal").addEventListener("input", updateScreen);
+  $("camY").addEventListener("input", updateScreen);
+  updateScreen();
+}
+loadScreens();
+
+let stream = null;
+let videoSettings = {};
+async function enableCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
+    });
+    const track = stream.getVideoTracks()[0];
+    videoSettings = track.getSettings();
+    $("preview").srcObject = stream;
+    $("preview").hidden = false;
+    $("camStatus").textContent = `Webcam on: ${videoSettings.width}x${videoSettings.height} @ ${Math.round(videoSettings.frameRate || 0)} fps`;
+    $("camStatus").className = "status ok";
+    $("startBtn").disabled = false;
+    return true;
+  } catch (err) {
+    $("camStatus").textContent = `Webcam refused or not found (${err.name}). Allow the camera for this page and try again.`;
+    $("camStatus").className = "status err";
+    return false;
+  }
+}
+$("camBtn").addEventListener("click", enableCamera);
+
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffle(arr, rnd) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
+}
+function buildRound(rnd) {
+  const lo = MARGIN, mid = 0.5, hi = 1 - MARGIN, q1 = 0.28, q3 = 0.72;
+  const grid = [[lo, lo], [mid, lo], [hi, lo], [lo, mid], [mid, mid], [hi, mid], [lo, hi], [mid, hi], [hi, hi],
+                [q1, q1], [q3, q1], [q1, q3], [q3, q3]];
+  const steps = shuffle(grid.slice(), rnd).map((p) => ({ phase: "grid", x: p[0], y: p[1], ms: GRID_MS }));
+  let prev = steps[steps.length - 1];
+  for (let k = 0; k < 15; k++) {
+    let p;
+    do { p = { x: lo + rnd() * (hi - lo), y: lo + rnd() * (hi - lo) }; } while (Math.hypot(p.x - prev.x, p.y - prev.y) < 0.15);
+    steps.push({ phase: "random", x: p.x, y: p.y, ms: RANDOM_MS });
+    prev = p;
+  }
+  steps.push({ phase: "pursuit", ms: PURSUIT_MS, fx: 0.09 + rnd() * 0.04, fy: 0.15 + rnd() * 0.04, ph: rnd() * Math.PI });
+  return steps;
+}
+function pursuitPos(step, tSec) {
+  return {
+    x: 0.5 + (0.5 - MARGIN) * 0.85 * Math.sin(2 * Math.PI * step.fx * tSec),
+    y: 0.5 + (0.5 - MARGIN) * 0.85 * Math.sin(2 * Math.PI * step.fy * tSec + step.ph)
+  };
+}
+
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
+let recorder = null;
+let chunks = [];
+let t0 = 0;
+let log = null;
+let aborted = false;
+
+const now = () => performance.now() - t0;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(window.innerWidth * dpr);
+  canvas.height = Math.round(window.innerHeight * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function clear(color) { ctx.fillStyle = color; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight); }
+let progressLabel = "";
+function drawTarget(px, py, ageMs) {
+  clear("#000");
+  ctx.fillStyle = "#7a1f1f"; ctx.beginPath(); ctx.arc(18, window.innerHeight - 18, 5, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillStyle = "#3a3f46"; ctx.font = "13px -apple-system, sans-serif"; ctx.fillText(progressLabel, 30, window.innerHeight - 13);
+  const r = 8 + 22 * Math.max(0, 1 - ageMs / 350);
+  ctx.beginPath(); ctx.arc(px, py, r, 0, 2 * Math.PI); ctx.strokeStyle = "#f5c84c"; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 2 * Math.PI); ctx.fillStyle = "#ffffff"; ctx.fill();
+}
+
+async function flash(label) {
+  const start = now();
+  clear("#fff");
+  await sleep(FLASH_MS);
+  clear("#000");
+  log.flashes.push({ label, t_start: start, t_end: now() });
+  await sleep(500);
+}
+
+function runStep(round, index, step) {
+  return new Promise((resolve) => {
+    const start = now();
+    const w = window.innerWidth, h = window.innerHeight;
+    const fixed = step.phase !== "pursuit";
+    const seg = { round, index, phase: step.phase, t_start: start, t_end: null,
+                  x: fixed ? step.x * w : null, y: fixed ? step.y * h : null };
+    log.segments.push(seg);
+    function frame() {
+      if (aborted) { seg.t_end = now(); resolve(); return; }
+      const age = now() - start;
+      const p = fixed ? { x: step.x, y: step.y } : pursuitPos(step, age / 1000);
+      drawTarget(p.x * w, p.y * h, fixed ? age : 1000);
+      log.samples.push([+now().toFixed(2), round, index, step.phase, +(p.x * w).toFixed(2), +(p.y * h).toFixed(2)]);
+      if (age >= step.ms) { seg.t_end = now(); resolve(); return; }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+function waitForContinue(title, text, autoSec = 0) {
+  return new Promise((resolve) => {
+    $("overlayTitle").textContent = title;
+    $("overlayText").textContent = text;
+    $("overlay").style.display = "grid";
+    speak(`${title}. ${text}`);
+    const start = now();
+    let timer = null;
+    if (autoSec > 0) {
+      let left = autoSec;
+      const tick = () => {
+        $("overlayHint").textContent = `The dot comes back in ${left} s`;
+        if (left-- <= 0) done(); else timer = setTimeout(tick, 1000);
+      };
+      tick();
+    } else {
+      $("overlayHint").textContent = "Space or click to continue";
+    }
+    function done() {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      window.removeEventListener("keydown", onKey);
+      $("overlay").removeEventListener("click", done);
+      if ($("overlay").style.display === "none") return;
+      $("overlay").style.display = "none";
+      log.segments.push({ phase: "pause", t_start: start, t_end: now() });
+      resolve();
+    }
+    function onKey(e) { if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); done(); } }
+    window.addEventListener("keydown", onKey);
+    $("overlay").addEventListener("click", done);
+  });
+}
+
+function cameraGuess() {
+  const full = !!document.fullscreenElement || (window.innerWidth === screen.width && window.outerHeight === window.innerHeight);
+  const left = full ? 0 : window.screenX + (window.outerWidth - window.innerWidth) / 2;
+  const top = full ? 0 : window.screenY + (window.outerHeight - window.innerHeight);
+  return { x: screenModel.camera_x_mm / mmPerPx - left, y: screenModel.camera_y_mm / mmPerPx - top };
+}
+
+function pickMime() {
+  const options = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+  return options.find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "";
+}
+
+async function startSession() {
+  aborted = false;
+  const rounds = parseInt($("rounds").value, 10);
+  const seed = Math.floor(Math.random() * 2 ** 31);
+  const rnd = mulberry32(seed);
+  try { await document.documentElement.requestFullscreen(); } catch (e) {}
+  await sleep(600);
+  $("setup").style.display = "none";
+  $("stage").style.display = "block";
+  resizeCanvas();
+  clear("#000");
+
+  const mimeType = pickMime();
+  chunks = [];
+  recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 8000000 } : undefined);
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  const started = new Promise((r) => { recorder.onstart = r; });
+  const stopped = new Promise((r) => { recorder.onstop = r; });
+  recorder.start(1000);
+  await started;
+  t0 = performance.now();
+
+  log = {
+    format: "gaze-calibration-1",
+    created: new Date().toISOString(),
+    user_agent: navigator.userAgent,
+    seed, rounds,
+    mm_per_css_px: mmPerPx,
+    mm_source: mmSource,
+    screen_model: screenModel,
+    screen: { width: screen.width, height: screen.height, device_pixel_ratio: window.devicePixelRatio },
+    viewport: { width: window.innerWidth, height: window.innerHeight, fullscreen: !!document.fullscreenElement,
+                browser_fullscreen: window.innerWidth === screen.width && window.outerHeight === window.innerHeight,
+                screen_x: window.screenX, screen_y: window.screenY, outer_width: window.outerWidth, outer_height: window.outerHeight },
+    auto: AUTO,
+    camera_guess_css_px: cameraGuess(),
+    video: { mime_type: recorder.mimeType, width: videoSettings.width, height: videoSettings.height, frame_rate: videoSettings.frameRate },
+    time_origin: "MediaRecorder start event (ms)",
+    flashes: [], segments: [],
+    sample_columns: ["t_ms", "round", "index", "phase", "x_css", "y_css"],
+    samples: []
+  };
+
+  const onEsc = (e) => { if (e.code === "Escape") aborted = true; };
+  window.addEventListener("keydown", onEsc);
+
+  await sleep(500);
+  if (AUTO) {
+    await waitForContinue("Gaze calibration",
+      `${rounds} rounds of about one minute. Follow the yellow dot with your eyes, keeping your head still during a round. `
+      + "Between rounds, I will tell you how to place your head. The screen will flash white to synchronise.", INTRO_SEC);
+  }
+  await flash("start");
+  for (let r = 0; r < rounds && !aborted; r++) {
+    await waitForContinue(`Round ${r + 1} of ${rounds}`, ROUND_HINTS[r % ROUND_HINTS.length] + " Then follow the dot with your eyes.", AUTO ? PAUSE_SEC : 0);
+    const steps = buildRound(rnd);
+    for (let i = 0; i < steps.length && !aborted; i++) {
+      progressLabel = `round ${r + 1}/${rounds}  ${Math.round(100 * i / steps.length)} %`;
+      await runStep(r, i, steps[i]);
+    }
+  }
+  if (!aborted) await flash("end");
+  speak(aborted ? "Session stopped." : "Done, thank you. Saving the files.");
+  log.aborted = aborted;
+  log.duration_ms = now();
+  window.removeEventListener("keydown", onEsc);
+  recorder.stop();
+  await stopped;
+  if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch (e) {} }
+  $("stage").style.display = "none";
+  $("setup").style.display = "grid";
+  await offerDownloads();
+}
+
+async function upload(blob, name) {
+  const r = await fetch(`/upload?name=${encodeURIComponent(name)}`, { method: "POST", body: blob });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return (await r.json()).path;
+}
+
+async function offerDownloads() {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").slice(0, 15);
+  const ext = (log.video.mime_type || "").includes("mp4") ? "mp4" : "webm";
+  const videoBlob = new Blob(chunks, { type: log.video.mime_type || "video/webm" });
+  log.video_file = `calib_${stamp}.${ext}`;
+  const logName = `calib_${stamp}.json`;
+  const logBlob = new Blob([JSON.stringify(log)], { type: "application/json" });
+  const links = $("links");
+  links.textContent = "";
+  for (const [blob, name, label] of [[videoBlob, log.video_file, "Download the video"], [logBlob, logName, "Download the log"]]) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.textContent = `${label} (${(blob.size / 1e6).toFixed(1)} Mo)`;
+    links.appendChild(a);
+  }
+  const nFixed = log.segments.filter((s) => s.phase === "grid" || s.phase === "random").length;
+  $("summary").textContent = `${log.aborted ? "Session stopped" : "Session finished"}: ${(log.duration_ms / 1000).toFixed(0)} s recorded, ${nFixed} fixed targets, ${log.flashes.length} sync flashes.`
+    + (log.viewport.fullscreen ? "" : " Warning: full screen was refused, the webcam position will be less accurate.");
+  $("downloads").hidden = false;
+  $("downloads").scrollIntoView({ behavior: "smooth" });
+  try {
+    $("summary").textContent += " Saving the files...";
+    const videoPath = await upload(videoBlob, log.video_file);
+    const logPath = await upload(logBlob, logName);
+    $("summary").textContent = $("summary").textContent.replace(" Saving the files...", "")
+      + ` Files saved: ${videoPath} and ${logPath}. You can close this window (Cmd+Q).`;
+    speak("Files saved. You can close the window.");
+  } catch (err) {
+    $("summary").textContent += ` Automatic saving failed (${err.message}): use the links below.`;
+    if (AUTO) document.querySelectorAll("#links a").forEach((a) => a.click());
+  }
+}
+
+$("startBtn").addEventListener("click", () => {
+  startSession().catch((err) => {
+    $("stage").style.display = "none";
+    $("setup").style.display = "grid";
+    $("camStatus").textContent = `La session a echoue: ${err.message}`;
+    $("camStatus").className = "status err";
+  });
+});
+window.addEventListener("resize", () => { if ($("stage").style.display === "block") resizeCanvas(); });
+
+if (AUTO) {
+  const wanted = params.get("rounds");
+  if (wanted && ![...$("rounds").options].some((o) => o.value === wanted)) $("rounds").add(new Option(`${wanted} tours`, wanted));
+  if (wanted) $("rounds").value = wanted;
+  enableCamera().then((ok) => {
+    if (!ok) return;
+    startSession().catch((err) => {
+      $("stage").style.display = "none";
+      $("setup").style.display = "grid";
+      $("camStatus").textContent = `La session a echoue: ${err.message}`;
+      $("camStatus").className = "status err";
+    });
+  });
+}
+</script>
+</body>
+</html>

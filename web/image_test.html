@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gaze test on images</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #ddd; font: 16px -apple-system, Helvetica, sans-serif; overflow: hidden; }
+  #intro { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 14px; padding: 16px; }
+  #intro button { font: inherit; padding: 10px 18px; border: 0; border-radius: 8px; background: #f5c84c; color: #111; cursor: pointer; }
+  #stage { position: absolute; inset: 0; display: none; }
+  #stage img { position: absolute; }
+  #done { position: absolute; inset: 0; display: none; place-content: center; text-align: center; padding: 16px; }
+</style>
+</head>
+<body>
+<div id="intro">
+  <div>Look at the images freely. The screen will flash first, then show 9 yellow dots to look at.</div>
+  <div><button id="go">Start</button></div>
+</div>
+<div id="stage"></div>
+<div id="done">Thank you, the recording is finished.</div>
+<script src="gaze-recorder.js" data-ui="off"></script>
+<script>
+"use strict";
+const q = new URLSearchParams(location.search);
+const images = q.getAll("img");
+const seconds = parseFloat(q.get("seconds") || "10");
+const upload = q.get("upload") || (location.protocol.startsWith("http") ? "/upload" : null);
+const stage = document.getElementById("stage");
+
+function place(img) {
+  const k = Math.min(innerWidth / img.naturalWidth, innerHeight / img.naturalHeight);
+  const w = img.naturalWidth * k, h = img.naturalHeight * k;
+  Object.assign(img.style, { width: `${w}px`, height: `${h}px`, left: `${(innerWidth - w) / 2}px`, top: `${(innerHeight - h) / 2}px` });
+}
+
+async function load(src, name) {
+  const img = new Image();
+  img.dataset.gazeAoi = name;
+  img.src = src;
+  await img.decode();
+  return img;
+}
+
+document.getElementById("go").addEventListener("click", async () => {
+  document.getElementById("intro").style.display = "none";
+  const loaded = await Promise.all(images.map((src, i) => load(src, images.length > 1 ? `image${i + 1}` : "image")));
+  await GazeRecorder.start({ upload, name: q.get("name") || null });
+  stage.style.display = "block";
+  for (const img of loaded) {
+    stage.replaceChildren(img);
+    place(img);
+    GazeRecorder.mark(img.dataset.gazeAoi);
+    await new Promise((r) => setTimeout(r, seconds * 1000));
+  }
+  stage.replaceChildren();
+  await GazeRecorder.stop();
+  stage.style.display = "none";
+  document.getElementById("done").style.display = "grid";
+});
+addEventListener("resize", () => stage.querySelectorAll("img").forEach(place));
+</script>
+</body>
+</html>

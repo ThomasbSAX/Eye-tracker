@@ -1,0 +1,68 @@
+\begin{tikzpicture}[x=0.235cm,y=0.235cm,>={Stealth[length=1.6mm]},font=\footnotesize]
+\fill[black!4] (0,0) circle (11.96);
+\fill[black!4] (5.3,0) circle (7.8);
+\draw[line width=0.9pt] (29.57:11.96) arc (29.57:330.43:11.96);
+\draw[line width=0.9pt] (5.3,0)++(-49.17:7.8) arc (-49.17:49.17:7.8);
+\draw[black!45,densely dashed] (5.3,0)++(49.17:7.8) arc (49.17:310.83:7.8);
+\draw[black!35] (7.4,0) ellipse (1.9 and 4.4);
+\draw[line width=2.2pt] (10.4,1.8) -- (10.4,5.9);
+\draw[line width=2.2pt] (10.4,-1.8) -- (10.4,-5.9);
+\draw[thick] (-11.85,1.6) -- (-16,2.0);
+\draw[thick] (-11.85,-1.6) -- (-16,-2.0);
+\draw[black!50] (-16,0) -- (24,0);
+\draw[->,densely dashed] (5.3,0) -- ++(5:19.5) node[right] {axe visuel};
+\draw[->,line width=1.3pt] (10.4,0) -- (23,0) node[right] {$\bm o$};
+\node[align=left,anchor=north west] at (16.2,-0.6) {axe optique,\\normale au plan\\du limbe};
+\draw (13.4,0) arc (0:5:8.1);
+\node at (14.4,1.15) {$\theta_\kappa$};
+\draw (10.4,0) -- (10.4,0.9) -- (11.3,0.9) -- (11.3,0);
+\draw (5.3,0) -- node[above left=-2pt] {$r_c$} (10.4,5.9);
+\draw (0,0) -- node[below left=-1pt] {$R_e$} (10.4,-5.9);
+\draw[dotted] (10.4,5.9) -- (18.9,5.9);
+\draw[<->] (18.2,0.15) -- node[right] {$r_L$} (18.2,5.75);
+\draw[dotted] (0,-0.5) -- (0,-15.2);
+\draw[dotted] (10.4,-6.4) -- (10.4,-15.2);
+\draw[dotted] (5.3,-0.5) -- (5.3,-12.6);
+\draw[<->] (0,-14.6) -- node[below] {$d_L=10{,}4$ mm} (10.4,-14.6);
+\draw[<->] (0,-12) -- node[below] {$5{,}3$} (5.3,-12);
+\draw[<->] (5.3,-12) -- node[below] {$d_{ci}$} (10.4,-12);
+\fill (0,0) circle (0.35) node[above left] {$\bm c_e$};
+\fill (5.3,0) circle (0.3) node[above left=-1pt] {$\bm O_c$};
+\fill (10.4,0) circle (0.3) node[below right=-1pt] {$\bm L$};
+\node[align=center] at (-5,6.5) {globe\\$R_e\approx12$ mm};
+\node at (15.6,-7.6) {cornée, $r_c=7{,}8$ mm};
+\node at (4.2,-8.6) {cristallin};
+\node[align=left] at (19,9.2) {iris : cercle du limbe};
+\draw[black!60] (16.1,8.6) -- (10.6,4.6);
+\node[align=center] at (-16.5,-4.2) {nerf\\optique};
+\node at (-16,12.5) {\textsc{(a)}};
+\end{tikzpicture}
+
+\vspace{4mm}
+
+\begin{tikzpicture}[x=0.235cm,y=0.235cm,>={Stealth[length=1.6mm]},font=\footnotesize]
+\def\th{28}
+\fill[black!4] (0,0) circle (11.96);
+\fill[black!4] (\th:5.3) circle (7.8);
+\draw[line width=0.9pt] (\th+29.57:11.96) arc (\th+29.57:\th+330.43:11.96);
+\draw[line width=0.9pt] (\th:5.3)++(\th-49.17:7.8) arc (\th-49.17:\th+49.17:7.8);
+\draw[line width=2.2pt] ($(\th:10.4)+(\th+90:5.9)$) -- ($(\th:10.4)+(\th+90:1.8)$);
+\draw[line width=2.2pt] ($(\th:10.4)+(\th-90:1.8)$) -- ($(\th:10.4)+(\th-90:5.9)$);
+\draw[black!50] (-13,0) -- (31,0);
+\draw[->,line width=1.3pt] (\th:10.4) -- (\th:22) node[above] {$\bm o$};
+\draw (\th:10.4) -- ++(\th+90:0.9) -- ++(\th:0.9) -- ++(\th-90:0.9);
+\draw (6,0) arc (0:\th:6) node[midway,right] {$\theta$};
+\fill (0,0) circle (0.35) node[below left] {$\bm c_e$};
+\fill (\th:10.4) circle (0.3) node[below right=-1pt] {$\bm L$};
+\draw[line width=1.1pt] (27,-13) -- (27,13) node[above] {plan image};
+\node[align=center,anchor=north] at (27,-13.4) {projection parallèle\\d'échelle $\kappa=f/D$};
+\draw[densely dotted] (\th:10.4) -- (27,{10.4*sin(\th)});
+\draw[densely dotted] ($(\th:10.4)+(\th+90:5.9)$) -- (27,{10.4*sin(\th)+5.9*cos(\th)});
+\draw[densely dotted] ($(\th:10.4)+(\th-90:5.9)$) -- (27,{10.4*sin(\th)-5.9*cos(\th)});
+\fill (27,0) circle (0.3) node[right] {$\bm q$};
+\fill (27,{10.4*sin(\th)}) circle (0.3) node[right] {$\bm p$};
+\draw[<->] (24.6,0.2) -- node[left,align=right] {$\kappa\,d_L\sin\theta$\\$=\gamma\rho\sin\theta$} (24.6,{10.4*sin(\th)-0.2});
+\draw[decorate,decoration={brace,amplitude=4pt}] (28.6,{10.4*sin(\th)+5.9*cos(\th)}) -- (28.6,{10.4*sin(\th)-5.9*cos(\th)}) node[midway,right=4pt,align=left] {$2\kappa r_L\cos\theta$\\(petit axe de\\l'ellipse)};
+\draw[->] (31,0) -- (33.5,0) node[below] {$z$};
+\node at (-14,12.5) {\textsc{(b)}};
+\end{tikzpicture}
